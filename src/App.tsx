@@ -5,11 +5,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Timer, Play, Dumbbell, Activity, Target, Zap, Footprints, CircleDot, CheckCircle2, Menu, X, Utensils, Clock, Rocket, ChevronRight, Check, BellOff, Sun, Moon, Droplets, Brain } from 'lucide-react';
+import { Timer, Play, Dumbbell, Activity, Target, Zap, Footprints, CircleDot, CheckCircle2, Menu, X, Utensils, Clock, Rocket, ChevronRight, Check, BellOff, Sun, Moon, Droplets, Brain, Lock } from 'lucide-react';
 import { WORKOUTS } from './constants';
 import { WorkoutBlock } from './types';
 
-type Product = 'DESAFIO' | 'NUTRI' | '5AM';
+type Product = 'DESAFIO' | 'NUTRI' | '5AM' | 'COMUNIDADE';
 
 const workoutIcons: Record<string, string> = {
   A: 'https://res.cloudinary.com/duzntztaw/image/upload/v1772513324/Treino_Superiores_nofgm1.png',
@@ -222,6 +222,9 @@ export default function App() {
   const [activeProduct, setActiveProduct] = useState<Product>('DESAFIO');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState(WORKOUTS[0].id);
+  const [isNutritionLocked, setIsNutritionLocked] = useState(true);
+  const [isNutriModalOpen, setIsNutriModalOpen] = useState(false);
+  const [isComunidadeModalOpen, setIsComunidadeModalOpen] = useState(false);
 
   const currentWorkout = WORKOUTS.find(w => w.id === selectedWorkoutId) || WORKOUTS[0];
 
@@ -234,6 +237,7 @@ export default function App() {
     { 
       id: 'DESAFIO', 
       name: 'Desafio Atleta Híbrido', 
+      locked: false,
       icon: ({ className }: { className?: string }) => (
         <img 
           src="https://res.cloudinary.com/duzntztaw/image/upload/v1772513701/Treino_Hibrido_th39js.png" 
@@ -244,8 +248,9 @@ export default function App() {
       ), 
       color: 'primary' 
     },
-    { id: 'NUTRI', name: 'Guia Nutricional', icon: Utensils, color: 'orange-400' },
-    { id: '5AM', name: 'Modo Híbrido 5AM', icon: Clock, color: 'blue-400' },
+    { id: 'NUTRI', name: 'Guia Nutricional', icon: Utensils, color: 'orange-400', locked: isNutritionLocked },
+    { id: '5AM', name: 'Modo Híbrido 5AM', icon: Clock, color: 'blue-400', locked: false },
+    { id: 'COMUNIDADE', name: 'Comunidade Time Híbrido', icon: Target, color: 'red-500', locked: true },
   ];
 
   return (
@@ -309,42 +314,80 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar">
-                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-6">Selecione o Produto</p>
-                {products.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setActiveProduct(p.id as Product)}
-                    className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all duration-500 relative overflow-hidden group/item ${
-                      activeProduct === p.id 
-                        ? 'bg-primary/10 border-primary/30 shadow-[0_10px_30px_rgba(212,255,0,0.05)]' 
-                        : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
-                    }`}
-                  >
-                    {activeProduct === p.id && (
-                      <motion.div 
-                        layoutId="active-item-indicator"
-                        className="absolute left-0 top-0 bottom-0 w-1 bg-primary"
-                      />
-                    )}
-                    <div className="flex items-center gap-5">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                        activeProduct === p.id ? 'bg-primary text-black shadow-[0_0_20px_rgba(212,255,0,0.3)]' : 'bg-white/5 text-white/30 group-hover/item:text-white'
-                      }`}>
-                        <p.icon className="w-6 h-6" />
-                      </div>
-                      <div className="text-left">
-                        <span className={`text-sm font-black uppercase tracking-tight block transition-colors ${
-                          activeProduct === p.id ? 'text-primary' : 'text-white/60'
+              <div className="flex-1 space-y-8 overflow-y-auto no-scrollbar">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-4">Produtos Liberados</p>
+                  {products.filter(p => !p.locked).map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setActiveProduct(p.id as Product);
+                        setIsMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-5 rounded-2xl border transition-all duration-500 relative overflow-hidden group/item ${
+                        activeProduct === p.id 
+                          ? 'bg-primary/10 border-primary/30 shadow-[0_10px_30px_rgba(212,255,0,0.05)]' 
+                          : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                      }`}
+                    >
+                      {activeProduct === p.id && (
+                        <motion.div 
+                          layoutId="active-item-indicator"
+                          className="absolute left-0 top-0 bottom-0 w-1 bg-primary"
+                        />
+                      )}
+                      <div className="flex items-center gap-5">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 relative ${
+                          activeProduct === p.id ? 'bg-primary text-black shadow-[0_0_20px_rgba(212,255,0,0.3)]' : 'bg-white/5 text-white/30 group-hover/item:text-white'
                         }`}>
-                          {p.name}
-                        </span>
-                        <span className="text-[10px] text-white/20 uppercase font-black tracking-widest mt-1 block">Acessar Agora</span>
+                          <p.icon className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <span className={`text-sm font-black uppercase tracking-tight block transition-colors ${
+                            activeProduct === p.id ? 'text-primary' : 'text-white/60'
+                          }`}>
+                            {p.name}
+                          </span>
+                          <span className="text-[10px] text-white/20 uppercase font-black tracking-widest mt-1 block">Acessar Agora</span>
+                        </div>
                       </div>
-                    </div>
-                    {activeProduct === p.id && <ChevronRight className="w-5 h-5 text-primary" />}
-                  </button>
-                ))}
+                      {activeProduct === p.id && <ChevronRight className="w-5 h-5 text-primary" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-4">Outros Produtos</p>
+                  {products.filter(p => p.locked).map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        if (p.id === 'NUTRI') setIsNutriModalOpen(true);
+                        if (p.id === 'COMUNIDADE') setIsComunidadeModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between p-5 rounded-2xl border bg-white/[0.01] border-white/5 hover:bg-white/[0.03] transition-all duration-500 relative overflow-hidden group/item"
+                    >
+                      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] z-10 flex items-center justify-end pr-6">
+                        <div className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shadow-lg">
+                          <Lock className="w-3 h-3 text-white/40" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-2xl bg-white/5 text-white/10 flex items-center justify-center transition-all duration-500 relative">
+                          <p.icon className="w-6 h-6" />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-sm font-black uppercase tracking-tight block text-white/40">
+                            {p.name}
+                          </span>
+                          <span className="text-[10px] uppercase font-black tracking-widest mt-1 block text-white/10">
+                            Acesso Bloqueado
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="mt-auto pt-10">
@@ -410,8 +453,33 @@ export default function App() {
             </div>
           </>
         ) : activeProduct === 'NUTRI' ? (
-          <div className="py-12 px-6">
-            <div className="text-center mb-12">
+          <div className="py-12 px-6 relative">
+            {isNutritionLocked && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-start pt-40 px-8 bg-dark/40 backdrop-blur-md rounded-[3rem]">
+                <div className="w-20 h-20 rounded-[2.5rem] bg-orange-500/20 border border-orange-500/30 flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(249,115,22,0.2)]">
+                  <Lock className="w-8 h-8 text-orange-500 animate-pulse" />
+                </div>
+                <h3 className="text-2xl font-display font-black uppercase tracking-tighter text-white mb-4 text-center italic">Acesso Restrito</h3>
+                <p className="text-sm text-white/40 leading-relaxed text-center font-medium mb-10 max-w-[240px]">
+                  Este guia é exclusivo para membros da elite. Desbloqueie para acessar seu plano alimentar.
+                </p>
+                <button 
+                  onClick={() => setIsNutritionLocked(false)}
+                  className="w-full py-5 rounded-[2rem] bg-orange-500 text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-3"
+                >
+                  <Zap className="w-4 h-4 fill-black" />
+                  Desbloquear Guia Nutri
+                </button>
+                
+                <div className="mt-8 flex items-center gap-2 opacity-20">
+                  <div className="w-1 h-1 rounded-full bg-white"></div>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-white">Protocolo de Segurança Ativo</span>
+                </div>
+              </div>
+            )}
+
+            <div className={`${isNutritionLocked ? 'opacity-20 grayscale pointer-events-none' : ''} transition-all duration-1000`}>
+              <div className="text-center mb-12">
               <div className="inline-flex items-center gap-3 mb-4 px-4 py-2 rounded-full bg-orange-500/5 border border-orange-500/10">
                 <Utensils className="w-4 h-4 text-orange-400" />
                 <span className="text-[10px] font-black text-orange-400 uppercase tracking-[0.3em]">Em Desenvolvimento</span>
@@ -454,6 +522,7 @@ export default function App() {
                 Este módulo está sendo finalizado com as melhores estratégias nutricionais do mercado. Fique atento.
               </p>
             </div>
+            </div>
           </div>
         ) : (
           <ModoHibrido5AM />
@@ -472,7 +541,131 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Fixed Bottom Navigation (Only for DESAFIO) */}
+      {/* Modals for Locked Products */}
+      <AnimatePresence>
+        {isNutriModalOpen && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsNutriModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm bg-surface border border-white/10 rounded-[3rem] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] rounded-full -mr-16 -mt-16"></div>
+              
+              <div className="w-16 h-16 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center mb-6">
+                <Lock className="w-6 h-6 text-orange-500" />
+              </div>
+              
+              <h3 className="text-2xl font-display font-black uppercase tracking-tighter text-white mb-4 italic">Desbloquear Guia Nutri</h3>
+              
+              <div className="p-5 rounded-2xl bg-orange-500/5 border border-orange-500/10 mb-8">
+                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Oferta Promocional</p>
+                <p className="text-sm text-white/60 leading-relaxed font-medium">
+                  Acesse agora o plano alimentar completo com <span className="text-white font-black">50% de desconto</span>. O combustível que falta para o seu resultado.
+                </p>
+              </div>
+              
+              <button 
+                onClick={() => {
+                  setIsNutritionLocked(false);
+                  setIsNutriModalOpen(false);
+                  setActiveProduct('NUTRI');
+                  setIsMenuOpen(false);
+                }}
+                className="w-full py-5 rounded-[2rem] bg-orange-500 text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-3"
+              >
+                Aproveitar Oferta
+              </button>
+              
+              <button 
+                onClick={() => setIsNutriModalOpen(false)}
+                className="w-full py-4 mt-2 text-[10px] font-black text-white/20 uppercase tracking-widest hover:text-white/40 transition-colors"
+              >
+                Talvez mais tarde
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        {isComunidadeModalOpen && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsComunidadeModalOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-gradient-to-b from-[#2a1a10] to-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-orange-900/20 blur-[60px] rounded-full -mr-20 -mt-20"></div>
+              
+              <div className="flex items-center gap-3 mb-8">
+                <span className="text-2xl">🎯</span>
+                <h3 className="text-lg font-display font-black uppercase tracking-tight text-white leading-tight">
+                  Ao entrar na comunidade, <br/> você recebe:
+                </h3>
+              </div>
+              
+              <div className="space-y-5 mb-10">
+                {[
+                  { text: 'Treinos híbridos novos com ajustes semanais (Corrida + Musculação)' },
+                  { text: 'Acompanhamento contínuo com evolução programada' },
+                  { text: 'Grupo fechado com atletas híbridos de todo o Brasil' },
+                  { text: 'Suporte e orientação para manter o foco no seu objetivo' },
+                  { text: 'Acesso a conteúdos, desafios e encontros exclusivos' }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div className="w-5 h-5 rounded bg-green-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_0_10px_rgba(22,163,74,0.4)]">
+                      <Check className="w-3 h-3 text-white stroke-[4]" />
+                    </div>
+                    <p className="text-[11px] text-white/80 font-black uppercase tracking-tight leading-relaxed">
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center mb-10 px-4">
+                <p className="text-[10px] text-white/50 uppercase font-black tracking-widest leading-relaxed">
+                  <span className="text-lg block mb-2">📍</span> 
+                  Você já deu o <span className="text-white">primeiro passo</span>. <br/>
+                  Agora é hora de seguir firme com um time que te <span className="text-white">puxa pra cima</span> todos os dias.
+                </p>
+              </div>
+              
+              <button 
+                onClick={() => {
+                  window.open('https://pay.kiwify.com.br/xxxxx', '_blank');
+                  setIsComunidadeModalOpen(false);
+                }}
+                className="w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-3"
+              >
+                Quero Fazer Parte
+              </button>
+
+              <button 
+                onClick={() => setIsComunidadeModalOpen(false)}
+                className="w-full py-4 mt-2 text-[9px] font-black text-white/20 uppercase tracking-[0.3em] hover:text-white/40 transition-colors"
+              >
+                Fechar
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {activeProduct === 'DESAFIO' && (
         <nav className="fixed bottom-8 left-0 right-0 z-[100] px-10">
           <div className="max-w-[280px] mx-auto flex flex-col items-center">
